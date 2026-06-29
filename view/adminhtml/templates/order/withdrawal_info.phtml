@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use PH2M\OrderWithdrawal\Block\Adminhtml\Order\WithdrawalInfo;
+
+/** @var WithdrawalInfo $block */
+/** @var Escaper $escaper */
+
+$startDate              = $block->getStartDate();
+$endDate                = $block->getEndDate();
+$isBasedOnShipment      = $block->isBasedOnShipment();
+$isShipmentDateEnabled  = $block->isShipmentDateEnabled();
+$isActive               = $block->isWindowActive();
+$delayDays              = $block->getDelayDays();
+?>
+<section class="admin__page-section">
+    <div class="admin__page-section-title">
+        <span class="title"><?= $escaper->escapeHtml((string) __('Withdrawal period')) ?></span>
+    </div>
+
+    <div class="admin__page-section-content">
+        <table class="admin__table-secondary">
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('Duration')) ?></th>
+                <td><?= $escaper->escapeHtml((string) __('%1 days', $delayDays)) ?></td>
+            </tr>
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('Based on')) ?></th>
+                <td>
+                    <?php if (!$isShipmentDateEnabled): ?>
+                        <span><?= $escaper->escapeHtml((string) __('Order date')) ?></span>
+                        <span style="color:#888;margin-left:4px">
+                            <?= $escaper->escapeHtml((string) __('(shipment date feature disabled)')) ?>
+                        </span>
+                    <?php elseif ($isBasedOnShipment): ?>
+                        <span><?= $escaper->escapeHtml((string) __('Last shipment date')) ?></span>
+                        <span style="color:#888;margin-left:4px">
+                            (<?= $escaper->escapeHtml(
+                                $block->formatDate($block->getLastShipmentCreatedAt(), \IntlDateFormatter::MEDIUM, true)
+                            ) ?>)
+                        </span>
+                    <?php else: ?>
+                        <span><?= $escaper->escapeHtml((string) __('Order date')) ?></span>
+                        <span style="color:#888;margin-left:4px">
+                            <?= $escaper->escapeHtml((string) __('(no shipment yet)')) ?>
+                        </span>
+                    <?php endif ?>
+                </td>
+            </tr>
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('Start')) ?></th>
+                <td><?= $escaper->escapeHtml($block->formatDate($startDate, \IntlDateFormatter::MEDIUM, true)) ?></td>
+            </tr>
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('End')) ?></th>
+                <td><?= $escaper->escapeHtml($block->formatDate($endDate, \IntlDateFormatter::MEDIUM, true)) ?></td>
+            </tr>
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('Status')) ?></th>
+                <td>
+                    <?php if ($isActive): ?>
+                        <span style="color:#185b00;font-weight:bold">
+                            ✓ <?= $escaper->escapeHtml((string) __('Active')) ?>
+                        </span>
+                    <?php else: ?>
+                        <span style="color:#b30000;font-weight:bold">
+                            ✗ <?= $escaper->escapeHtml((string) __('Expired')) ?>
+                        </span>
+                    <?php endif ?>
+                </td>
+            </tr>
+        </table>
+    </div>
+</section>

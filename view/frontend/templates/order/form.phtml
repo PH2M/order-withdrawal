@@ -1,0 +1,299 @@
+<?php
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\ReCaptcha;
+use Magento\Framework\Escaper;
+use PH2M\OrderWithdrawal\Block\Order\Form;
+
+/** @var Form $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+/** @var ReCaptcha|null $recaptcha */
+
+// Load reCAPTCHA only when the Hyva ViewModel is available
+$recaptcha = class_exists(ReCaptcha::class)
+    ? $viewModels->require(ReCaptcha::class)
+    : null;
+$recaptchaFormId = 'customer_create';
+
+$order = $block->getOrder();
+$items = $block->getItems();
+$reasons   = $block->getReasons();
+$questions = $block->getQuestions();
+$withdrawableItemIds = array_map(
+    static fn ($item) => (int) $item->getItemId(),
+    array_filter($items, static fn ($item) => !$block->isExcludedItem($item))
+);
+?>
+<div class="withdrawal-form">
+    <h1 class="withdrawal-form__title">
+        <?= $escaper->escapeHtml((string) __('Withdrawal request')) ?>
+    </h1>
+
+    <?php if ($order): ?>
+        <p class="withdrawal-form__order-info">
+            <?= $escaper->escapeHtml((string) __('Order no. %1 of %2', $order->getRealOrderId(), $block->getFormattedOrderDate())) ?>
+        </p>
+    <?php endif; ?>
+
+    <?php if (empty($items)): ?>
+        <p class="withdrawal-form__empty"><?= $escaper->escapeHtml((string) __('No product of this order is eligible for withdrawal.')) ?></p>
+        <a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>" class="btn btn-secondary withdrawal-form__back-btn">
+            <?= $escaper->escapeHtml((string) __('Back to order')) ?>
+        </a>
+    <?php else: ?>
+        <form id="withdrawal-order-form"
+              action="<?= $escaper->escapeUrl($block->getSubmitUrl()) ?>"
+              method="post"
+              x-data="initWithdrawalForm"
+              data-item-ids="<?= $escaper->escapeHtmlAttr((string) json_encode(array_values($withdrawableItemIds))) ?>"
+              data-questions="<?= $escaper->escapeHtmlAttr((string) json_encode(array_keys($questions))) ?>"
+              @submit.prevent="onSubmit()">
+            <?= $block->getBlockHtml('formkey') ?>
+            <?= $block->getChildHtml() ?>
+            <div class="withdrawal-form__items">
+                <?php foreach ($items as $item): ?>
+                    <?php
+                    $itemId = (int) $item->getItemId();
+                    $qtyOrdered = max(1, (int) $item->getQtyOrdered());
+                    $productImageUrl = $block->getProductImageUrl($item);
+                    $isExcluded = $block->isExcludedItem($item);
+                    ?>
+                    <div class="withdrawal-item<?= $isExcluded ? ' withdrawal-item--excluded' : '' ?>">
+                        <label class="withdrawal-item__label<?= $isExcluded ? ' withdrawal-item__label--excluded' : '' ?>">
+                            <input type="checkbox"
+                                   class="form-checkbox"
+                                   name="items[<?= /* @noEscape */ $itemId ?>][selected]"
+                                   value="1"
+                                   data-item-id="<?= $escaper->escapeHtmlAttr((string) $itemId) ?>"
+                                   <?php if ($isExcluded): ?>
+                                   disabled
+                                   <?php else: ?>
+                                   :checked="isSelected"
+                                   @change="toggleSelected"
+                                   <?php endif ?>
+                            >
+                            <img src="<?= $escaper->escapeUrl($productImageUrl) ?>"
+                                 data-twic-src="<?= $escaper->escapeUrl($productImageUrl) ?>"
+                                 alt="<?= $escaper->escapeHtmlAttr((string) $item->getName()) ?>"
+                                 class="withdrawal-item__image"
+                                 loading="lazy">
+                            <span class="withdrawal-item__name">
+                                <?= $escaper->escapeHtml((string) $item->getName()) ?>
+                            </span>
+                        </label>
+
+                        <?php if ($isExcluded): ?>
+                            <p class="withdrawal-item__excluded-msg">
+                                <?= $escaper->escapeHtml((string) __('This product cannot be withdrawn (not eligible product).')) ?>
+                            </p>
+                        <?php else: ?>
+                            <div class="withdrawal-item__fields">
+
+                                <?php /* ── Quantity ── */ ?>
+                                <div class="withdrawal-item__qty">
+                                    <?php if ($qtyOrdered > 1): ?>
+                                        <label class="sr-only" for="qty-<?= /* @noEscape */ $itemId ?>">
+                                            <?= $escaper->escapeHtml((string) __('Quantity')) ?>
+                                        </label>
+                                        <select id="qty-<?= /* @noEscape */ $itemId ?>"
+                                                name="items[<?= /* @noEscape */ $itemId ?>][qty]"
+                                                class="form-select withdrawal-item__select"
+                                                data-item-id="<?= $escaper->escapeHtmlAttr((string) $itemId) ?>"
+                                                :disabled="isNotSelected">
+                                            <?php for ($q = 1; $q <= $qtyOrdered; $q++): ?>
+                                                <option value="<?= /* @noEscape */ $q ?>"><?= /* @noEscape */ $q ?></option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    <?php else: ?>
+                                        <input type="hidden" name="items[<?= /* @noEscape */ $itemId ?>][qty]" value="1">
+                                        <span class="withdrawal-item__qty-label"><?= $escaper->escapeHtml((string) __('Qty: 1')) ?></span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php /* ── Reason ── */ ?>
+                                <div>
+                                    <label class="sr-only" for="reason-<?= /* @noEscape */ $itemId ?>">
+                                        <?= $escaper->escapeHtml((string) __('Reason')) ?>
+                                    </label>
+                                    <select id="reason-<?= /* @noEscape */ $itemId ?>"
+                                            name="items[<?= /* @noEscape */ $itemId ?>][reason]"
+                                            class="form-select withdrawal-item__select"
+                                            data-item-id="<?= $escaper->escapeHtmlAttr((string) $itemId) ?>"
+                                            :disabled="isNotSelected"
+                                            @change="setReason">
+                                        <option value=""><?= $escaper->escapeHtml((string) __('Select a reason')) ?></option>
+                                        <?php foreach ($reasons as $reason): ?>
+                                            <option value="<?= $escaper->escapeHtmlAttr($reason) ?>">
+                                                <?= $escaper->escapeHtml($reason) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <?php /* ── Questions ── */ ?>
+                                <?php foreach ($questions as $question => $options): ?>
+                                    <div>
+                                        <label class="withdrawal-item__question-label"
+                                               for="question-<?= /* @noEscape */ $itemId ?>-<?= $escaper->escapeHtmlAttr(md5($question)) ?>">
+                                            <?= $escaper->escapeHtml($question) ?>
+                                            <span class="withdrawal-item__required" aria-hidden="true">*</span>
+                                        </label>
+
+                                        <?php if (is_array($options)): ?>
+                                            <select id="question-<?= /* @noEscape */ $itemId ?>-<?= $escaper->escapeHtmlAttr(md5($question)) ?>"
+                                                    name="items[<?= /* @noEscape */ $itemId ?>][questions][<?= $escaper->escapeHtmlAttr($question) ?>]"
+                                                    class="form-select withdrawal-item__select"
+                                                    data-item-id="<?= $escaper->escapeHtmlAttr((string) $itemId) ?>"
+                                                    data-question="<?= $escaper->escapeHtmlAttr($question) ?>"
+                                                    :disabled="isNotSelected"
+                                                    @change="setAnswer">
+                                                <option value=""><?= $escaper->escapeHtml((string) __('Select an answer')) ?></option>
+                                                <?php foreach ($options as $option): ?>
+                                                    <option value="<?= $escaper->escapeHtmlAttr($option) ?>">
+                                                        <?= $escaper->escapeHtml($option) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php else: ?>
+                                            <input type="text"
+                                                   id="question-<?= /* @noEscape */ $itemId ?>-<?= $escaper->escapeHtmlAttr(md5($question)) ?>"
+                                                   name="items[<?= /* @noEscape */ $itemId ?>][questions][<?= $escaper->escapeHtmlAttr($question) ?>]"
+                                                   class="form-input withdrawal-item__input"
+                                                   data-item-id="<?= $escaper->escapeHtmlAttr((string) $itemId) ?>"
+                                                   data-question="<?= $escaper->escapeHtmlAttr($question) ?>"
+                                                   :disabled="isNotSelected"
+                                                   @input="setAnswer">
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+
+                            </div>
+                        <?php endif ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <?php if (!$block->hasWithdrawableItems()): ?>
+                <p class="withdrawal-form__no-items">
+                    <?= $escaper->escapeHtml((string) __('No product of this order is eligible for withdrawal.')) ?>
+                </p>
+            <?php endif ?>
+
+            <p x-show="hasError" x-text="errorMessage" class="withdrawal-form__error" style="display:none"></p>
+
+            <?= $recaptcha ? $recaptcha->getLegalNoticeHtml($recaptchaFormId) : '' ?>
+            <?= $recaptcha ? $recaptcha->getInputHtml($recaptchaFormId) : '' ?>
+
+            <div class="withdrawal-form__actions">
+                <?php if ($block->hasWithdrawableItems()): ?>
+                    <button type="submit" class="btn btn-primary" data-recaptcha-btn>
+                        <?= $escaper->escapeHtml((string) __('Submit withdrawal request')) ?>
+                    </button>
+                <?php endif ?>
+                <a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>" class="btn btn-secondary">
+                    <?= $escaper->escapeHtml((string) __('Cancel')) ?>
+                </a>
+            </div>
+        </form>
+
+        <script>
+            (function () {
+                var alreadyLoaded = window.Alpine
+                    || document.querySelector('script[src*="alpine"]');
+                if (!alreadyLoaded) {
+                    var s = document.createElement('script');
+                    s.defer = true;
+                    s.src = '<?= $escaper->escapeUrl($block->getViewFileUrl('PH2M_OrderWithdrawal::js/alpine.min.js')) ?>';
+                    document.head.appendChild(s);
+                }
+            })();
+        </script>
+
+        <script>
+            function initWithdrawalForm() {
+                return {
+                    selected: {},
+                    reasons: {},
+                    answers: {},
+                    hasCaptchaToken: 0,
+                    hasError: false,
+                    errorMessage: '',
+
+                    init() {
+                        const ids       = JSON.parse(this.$root.dataset.itemIds  || '[]');
+                        const questions = JSON.parse(this.$root.dataset.questions || '[]');
+
+                        ids.forEach((id) => {
+                            this.selected[id] = false;
+                            this.reasons[id]  = '';
+                            this.answers[id]  = {};
+                            questions.forEach((q) => { this.answers[id][q] = ''; });
+                        });
+                    },
+
+                    isSelected() {
+                        return this.selected[this.$el.dataset.itemId] === true;
+                    },
+
+                    isNotSelected() {
+                        return this.selected[this.$el.dataset.itemId] !== true;
+                    },
+
+                    toggleSelected() {
+                        this.selected[this.$el.dataset.itemId] = this.$el.checked;
+                    },
+
+                    setReason() {
+                        this.reasons[this.$el.dataset.itemId] = this.$el.value;
+                    },
+
+                    setAnswer() {
+                        const id       = this.$el.dataset.itemId;
+                        const question = this.$el.dataset.question;
+                        this.answers[id][question] = this.$el.value;
+                    },
+
+                    onSubmit() {
+                        const questions = JSON.parse(this.$root.dataset.questions || '[]');
+                        const chosen    = Object.keys(this.selected).filter((id) => this.selected[id] === true);
+
+                        if (chosen.length === 0) {
+                            this.errorMessage = '<?= $escaper->escapeJs((string) __('Please select at least one product.')) ?>';
+                            this.hasError = true;
+                            return;
+                        }
+
+                        const missingReason = chosen.some((id) => !this.reasons[id]);
+                        if (missingReason) {
+                            this.errorMessage = '<?= $escaper->escapeJs((string) __('Please select a reason for each selected product.')) ?>';
+                            this.hasError = true;
+                            return;
+                        }
+
+                        const missingAnswer = chosen.some(
+                            (id) => questions.some((q) => !this.answers[id][q])
+                        );
+                        if (missingAnswer) {
+                            this.errorMessage = '<?= $escaper->escapeJs((string) __('Please answer all required questions for each selected product.')) ?>';
+                            this.hasError = true;
+                            return;
+                        }
+
+                        this.hasError = false;
+
+                        // Submit with optional reCAPTCHA validation
+                        const $form = document.getElementById('withdrawal-order-form');
+                        <?= $recaptcha ? $recaptcha->getValidationJsHtml($recaptchaFormId) : '' ?>
+                        if (this.hasCaptchaToken === 0) {
+                            $form.submit();
+                        }
+                    }
+                }
+            }
+            window.addEventListener('alpine:init', () => Alpine.data('initWithdrawalForm', initWithdrawalForm), {once: true})
+        </script>
+    <?php endif; ?>
+</div>

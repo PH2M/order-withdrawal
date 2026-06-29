@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Sales\Block\Order\View;
+use PH2M\OrderWithdrawal\ViewModel\Withdrawal as WithdrawalViewModel;
+
+/** @var View $block */
+/** @var Escaper $escaper */
+
+/** @var WithdrawalViewModel $viewModel */
+$viewModel = $block->getData('withdrawal_view_model');
+
+$order = $block->getOrder();
+
+if (!$order || !$viewModel->canWithdraw($order)) {
+    return;
+}
+?>
+<a href="<?= $escaper->escapeUrl($viewModel->getWithdrawalUrl($order)) ?>"
+    class="btn btn-secondary withdrawal-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 14L4 9l5-5" />
+        <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />
+    </svg>
+    <span><?= $escaper->escapeHtml((string) __('Request a withdrawal')) ?></span>
+</a>

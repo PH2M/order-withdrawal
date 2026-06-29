@@ -1,0 +1,32 @@
+<!--@subject {{trans "New withdrawal request for order %increment_id" increment_id=$increment_id}} @-->
+<!--@vars {
+"var increment_id":"Order Increment ID",
+"var customer_name":"Customer Name"
+} @-->
+{{template config_path="design/email/header_template"}}
+
+<p>{{trans "A new withdrawal request has been submitted."}}</p>
+
+<p>{{trans "Order: %increment_id" increment_id=$increment_id}}<br/>
+{{trans "Customer: %name" name=$customer_name}}</p>
+
+<table border="0" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;">
+    <thead>
+        <tr>
+            <th align="left">{{trans "Product"}}</th>
+            <th align="left">{{trans "SKU"}}</th>
+            <th align="left">{{trans "Qty"}}</th>
+            <th align="left">{{trans "Reason"}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{for item in items}}
+        <tr>
+            <td>{{var item.product_name}}</td>
+            <td>{{var item.sku}}</td>
+            <td>{{var item.qty}}</td>
+            <td>{{var item.reason}}</td>
+        </tr>
+        {{/for}}
+    </tbody>
+</table>

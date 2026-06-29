@@ -1,0 +1,38 @@
+{
+    "ph2m_order_withdrawal": {
+        "column": {
+            "entity_id": true,
+            "order_id": true,
+            "increment_id": true,
+            "customer_id": true,
+            "store_id": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "CDB_ORDER_WITHDRAWAL_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        },
+        "index": {
+            "CDB_ORDER_WITHDRAWAL_ORDER_ID": true,
+            "CDB_ORDER_WITHDRAWAL_CUSTOMER_ID": true
+        }
+    },
+    "ph2m_order_withdrawal_item": {
+        "column": {
+            "entity_id": true,
+            "withdrawal_id": true,
+            "order_item_id": true,
+            "sku": true,
+            "product_name": true,
+            "qty": true,
+            "reason": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "CDB_ORDER_WITHDRAWAL_ITEM_WITHDRAWAL_ID": true
+        },
+        "index": {
+            "CDB_ORDER_WITHDRAWAL_ITEM_WITHDRAWAL_ID": true
+        }
+    }
+}

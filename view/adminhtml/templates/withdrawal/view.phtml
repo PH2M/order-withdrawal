@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use PH2M\OrderWithdrawal\Block\Adminhtml\Withdrawal\View;
+use PH2M\OrderWithdrawal\Model\WithdrawalItem;
+
+/** @var View $block */
+/** @var Escaper $escaper */
+
+$withdrawal = $block->getWithdrawal();
+?>
+<?php if ($withdrawal): ?>
+    <div class="admin__page-section">
+        <div class="admin__page-section-title">
+            <span class="title"><?= $escaper->escapeHtml((string) __('Request details')) ?></span>
+        </div>
+        <table class="admin__table-secondary">
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('Order')) ?></th>
+                <td>
+                    <a href="<?= $escaper->escapeUrl($block->getOrderUrl((int) $withdrawal->getData('order_id'))) ?>">
+                        <?= $escaper->escapeHtml($withdrawal->getData('increment_id')) ?>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('Customer ID')) ?></th>
+                <td><?= $escaper->escapeHtml((string) $withdrawal->getData('customer_id')) ?></td>
+            </tr>
+            <tr>
+                <th><?= $escaper->escapeHtml((string) __('Created At')) ?></th>
+                <td><?= $escaper->escapeHtml($block->formatDate($withdrawal->getData('created_at'), \IntlDateFormatter::MEDIUM, true)) ?></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="admin__page-section">
+        <div class="admin__page-section-title">
+            <span class="title"><?= $escaper->escapeHtml((string) __('Products')) ?></span>
+        </div>
+        <table class="data-grid">
+            <thead>
+                <tr>
+                    <th><?= $escaper->escapeHtml((string) __('Product')) ?></th>
+                    <th><?= $escaper->escapeHtml((string) __('SKU')) ?></th>
+                    <th><?= $escaper->escapeHtml((string) __('Qty')) ?></th>
+                    <th><?= $escaper->escapeHtml((string) __('Reason')) ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($withdrawal->getItems() as $item): ?>
+                    <tr>
+                        <td><?= $escaper->escapeHtml($item->getData(WithdrawalItem::PRODUCT_NAME)) ?></td>
+                        <td><?= $escaper->escapeHtml($item->getData(WithdrawalItem::SKU)) ?></td>
+                        <td><?= $escaper->escapeHtml((string) $item->getData(WithdrawalItem::QTY)) ?></td>
+                        <td><?= nl2br($escaper->escapeHtml($item->getData(WithdrawalItem::REASON))) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin__page-section">
+        <a href="<?= $escaper->escapeUrl($block->getBackUrl()) ?>" class="action-default">
+            <?= $escaper->escapeHtml((string) __('Back')) ?>
+        </a>
+    </div>
+<?php endif; ?>

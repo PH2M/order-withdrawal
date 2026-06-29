@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Email:etc/email_templates.xsd">
+    <template id="ph2m_order_withdrawal_email_customer_template" label="Order Withdrawal - Customer Confirmation" file="withdrawal_customer.html" type="html" module="PH2M_OrderWithdrawal" area="frontend"/>
+    <template id="ph2m_order_withdrawal_email_admin_template" label="Order Withdrawal - Customer Service Notification" file="withdrawal_admin.html" type="html" module="PH2M_OrderWithdrawal" area="frontend"/>
+</config>

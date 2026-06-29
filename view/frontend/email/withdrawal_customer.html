@@ -1,0 +1,40 @@
+<!--@subject {{trans "Confirmation of your withdrawal request - Order %increment_id" increment_id=$increment_id}} @-->
+<!--@vars {
+"var increment_id":"Order Increment ID"
+} @-->
+{{template config_path="design/email/header_template"}}
+
+<p>{{trans "We confirm that we have received your withdrawal request for the following order:"}}</p>
+
+<ul>
+    <li>{{trans "Order number: %increment_id" increment_id=$increment_id}}</li>
+</ul>
+
+<table border="0" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;">
+    <thead>
+        <tr>
+            <th align="left">{{trans "Product"}}</th>
+            <th align="left">{{trans "Qty"}}</th>
+            <th align="left">{{trans "Reason"}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{for item in items}}
+        <tr>
+            <td>{{var item.product_name}}</td>
+            <td>{{var item.qty}}</td>
+            <td>{{var item.reason}}</td>
+        </tr>
+        {{/for}}
+    </tbody>
+</table>
+
+<br />
+<p>{{trans "Our customer service will get back to you within 48 working hours to inform you of the next steps, including return instructions."}}</p>
+
+<p>{{trans "Please note that return shipping costs are at your expense."}}</p>
+
+<p>{{trans "We hope to see you again soon on our website."}}</p>
+
+<p>{{trans "Best regards,"}}<br />
+    {{trans "%company_name Team" company_name=$company}}</p>

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="order_additional_info">
+            <block class="PH2M\OrderWithdrawal\Block\Adminhtml\Order\WithdrawalInfo"
+                   name="ph2m.order.withdrawal.info"
+                   template="PH2M_OrderWithdrawal::order/withdrawal_info.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

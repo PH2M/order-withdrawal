@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="extensions" translate="label" sortOrder="999">
+            <label>Extensions</label>
+        </tab>
+        <section id="ph2m_order_withdrawal" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Order Withdrawal</label>
+            <tab>extensions</tab>
+            <resource>PH2M_OrderWithdrawal::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Withdrawal</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="delay_days" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Withdrawal Window (days)</label>
+                    <comment>Number of calendar days during which the withdrawal button is shown.</comment>
+                    <validate>validate-digits validate-greater-than-zero</validate>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="use_shipment_date" translate="label comment" type="select" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Start window from last shipment date</label>
+                    <comment>If enabled, the withdrawal window starts from the date of the last shipment instead of the order creation date. Falls back to the order date when no shipment exists.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="eligible_statuses" translate="label comment" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Eligible Order Statuses</label>
+                    <comment>The button is only displayed when the order status is one of the selected ones.</comment>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="reasons" translate="label comment" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Withdrawal Reasons</label>
+                    <comment>One reason per line. Displayed as a dropdown on the withdrawal form.</comment>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="questions" translate="label comment" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Withdrawal Questions</label>
+                    <comment>Add one row per question/option. Same question repeated several times → rendered as a select on the form. A unique question → rendered as a free text field.</comment>
+                    <frontend_model>PH2M\OrderWithdrawal\Block\Adminhtml\System\Config\Form\Field\Questions</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="email" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Email</label>
+                <field id="recipient_email" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Send Withdrawal Request To</label>
+                    <comment>Customer service address that receives the withdrawal request notification.</comment>
+                    <validate>validate-email</validate>
+                </field>
+                <field id="sender_identity" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Email Sender</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Identity</source_model>
+                </field>
+                <field id="admin_template" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Customer Service Email Template</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="customer_template" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Customer Confirmation Email Template</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

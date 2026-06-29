@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="PH2M_OrderWithdrawal::withdrawal"
+             title="Order Withdrawals"
+             module="PH2M_OrderWithdrawal"
+             sortOrder="80"
+             parent="Magento_Sales::sales_operation"
+             action="order_withdrawal/withdrawal/index"
+             resource="PH2M_OrderWithdrawal::withdrawal"/>
+    </menu>
+</config>
